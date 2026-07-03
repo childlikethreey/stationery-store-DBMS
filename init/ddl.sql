@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS `Order_details` (
 
 CREATE TABLE IF NOT EXISTS `Customer` (
 	`cust_id` INTEGER NOT NULL AUTO_INCREMENT,
-	`cust_no` INTEGER NOT NULL UNIQUE,
+	`cust_no` VARCHAR(7) NOT NULL UNIQUE,
 	`co_name` VARCHAR(255) NOT NULL,
 	`contact_name` VARCHAR(100),
 	`phone` VARCHAR(30) NOT NULL,
