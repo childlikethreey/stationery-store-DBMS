@@ -13,8 +13,7 @@ CREATE TABLE IF NOT EXISTS `Order` (
 	`order_id` INTEGER NOT NULL AUTO_INCREMENT,
 	`order_no` VARCHAR(50) NOT NULL UNIQUE COMMENT '格式：INV-年份加上',
 	`date` DATE NOT NULL,
-	`reason` MEDIUMTEXT(65535) DEFAULT NULL COMMENT 'discount reason
-',
+	`reason` MEDIUMTEXT DEFAULT NULL COMMENT 'discount reason',
 	`discount` INTEGER UNSIGNED DEFAULT NULL,
 	`amount` INTEGER NOT NULL COMMENT '用 unit_price * unit 計算',
 	`status` VARCHAR(255) NOT NULL DEFAULT 'processing' CHECK(status in ("processing", "shipped", "completed", "cancelled" )),
@@ -86,7 +85,7 @@ CREATE TABLE IF NOT EXISTS `Purchase` (
 	`pu_id` INTEGER NOT NULL AUTO_INCREMENT,
 	`pu_no` VARCHAR(12) NOT NULL UNIQUE,
 	`date` DATE NOT NULL,
-	`reason` MEDIUMTEXT(65535) DEFAULT NULL,
+	`reason` MEDIUMTEXT DEFAULT NULL,
 	`discount` INTEGER UNSIGNED DEFAULT NULL,
 	`amount` INTEGER NOT NULL,
 	`staff_id` INTEGER NOT NULL,
@@ -108,7 +107,7 @@ CREATE TABLE IF NOT EXISTS `Promotion` (
 	`pro_id` INTEGER NOT NULL AUTO_INCREMENT,
 	`start_date` DATETIME NOT NULL,
 	`end_date` DATETIME NOT NULL,
-	`reason` MEDIUMTEXT(65535) NOT NULL,
+	`reason` MEDIUMTEXT NOT NULL,
 	PRIMARY KEY(`pro_id`)
 );
 

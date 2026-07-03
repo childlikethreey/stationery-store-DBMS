@@ -1,18 +1,21 @@
 import pymysql
 import os
-from dontev import load_dotenv
+from dotenv import load_dotenv
+from pymysql.constants import CLIENT
 import json
 
 load_dotenv()
-
 db_config = {
     'host': os.getenv('SERVER'),
     'user': os.getenv('USERNAME'),
     'password': os.getenv('PASSWORD'),
-    'port': int(os.getenv('PORT'))
+    'port': int(os.getenv('PORT')),
+    'charset': 'utf8mb4',
+    'client_flag': CLIENT.MULTI_STATEMENTS,
 }
-db_name=os.getenv('DBNAME')
-ddl_file = 'ddl.sql'
+
+db_name = os.getenv('DBNAME')
+ddl_file = 'init/ddl.sql'
 seed_file = ''
 
 def main():
@@ -29,9 +32,12 @@ def main():
         cursor.execute(f'use {db_name}')
         with open(ddl_file, 'r', encoding='utf-8') as f:
             content = f.read()
+        '''
         stmt = [s.strip() for s in content.split(';') if s.strip()]
         for n in stmt:
-            cursor.execute(stmt)
+            cursor.execute(n)
+        '''
+        cursor.execute(content)
         conn.commit()
 
         if os.path.exists(seed_file):
