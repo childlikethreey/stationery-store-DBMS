@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS `Staff` (
 	`staff_no` VARCHAR(9) NOT NULL UNIQUE,
 	`name` VARCHAR(100),
 	`dept` VARCHAR(50) NOT NULL,
-	`phone` VARCHAR(30),
+	`phone` VARCHAR(10),
 	`is_active` BOOLEAN NOT NULL DEFAULT true,
 	PRIMARY KEY(`staff_id`)
 );
