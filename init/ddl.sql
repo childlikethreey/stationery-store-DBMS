@@ -1,9 +1,9 @@
 CREATE TABLE IF NOT EXISTS `Staff` (
 	`staff_id` INTEGER NOT NULL AUTO_INCREMENT,
-	`staff_no` VARCHAR(9) NOT NULL UNIQUE,
+	`staff_no` VARCHAR(9) UNIQUE COMMENT 'Format: CS-XXXXXX(6 Xs)',
 	`name` VARCHAR(100),
 	`dept` VARCHAR(50) NOT NULL,
-	`phone` VARCHAR(10),
+	`phone` VARCHAR(30),
 	`is_active` BOOLEAN NOT NULL DEFAULT true,
 	PRIMARY KEY(`staff_id`)
 );
@@ -11,11 +11,11 @@ CREATE TABLE IF NOT EXISTS `Staff` (
 
 CREATE TABLE IF NOT EXISTS `Order` (
 	`order_id` INTEGER NOT NULL AUTO_INCREMENT,
-	`order_no` VARCHAR(50) NOT NULL UNIQUE COMMENT '格式：INV-年份加上',
+	`order_no` VARCHAR(50) UNIQUE COMMENT 'Format: INV-YEARXXXXXX(6 Xs)',
 	`date` DATE NOT NULL,
 	`reason` MEDIUMTEXT DEFAULT NULL COMMENT 'discount reason',
 	`discount` INTEGER UNSIGNED DEFAULT NULL,
-	`amount` INTEGER NOT NULL COMMENT '用 unit_price * unit 計算',
+	`amount` INTEGER COMMENT '用 unit_price * unit 計算',
 	`status` VARCHAR(255) NOT NULL DEFAULT 'processing' CHECK(status in ("processing", "shipped", "completed", "cancelled" )),
 	`staff_id` INTEGER NOT NULL,
 	`cust_id` INTEGER NOT NULL,
@@ -45,14 +45,14 @@ CREATE TABLE IF NOT EXISTS `Order_details` (
 	`pro_id` INTEGER DEFAULT NULL,
 	`unit` INTEGER UNSIGNED NOT NULL DEFAULT 0,
 	`price` INTEGER UNSIGNED NOT NULL,
-	`amount` INTEGER UNSIGNED NOT NULL,
+	`amount` INTEGER UNSIGNED,
 	PRIMARY KEY(`order_id`, `goods_id`)
 );
 
 
 CREATE TABLE IF NOT EXISTS `Customer` (
 	`cust_id` INTEGER NOT NULL AUTO_INCREMENT,
-	`cust_no` INTEGER NOT NULL UNIQUE,
+	`cust_no` VARCHAR(7) UNIQUE COMMENT 'Format: KXXXXXX',
 	`co_name` VARCHAR(255) NOT NULL,
 	`contact_name` VARCHAR(100),
 	`phone` VARCHAR(30) NOT NULL,
@@ -83,11 +83,11 @@ CREATE TABLE IF NOT EXISTS `Supplier` (
 
 CREATE TABLE IF NOT EXISTS `Purchase` (
 	`pu_id` INTEGER NOT NULL AUTO_INCREMENT,
-	`pu_no` VARCHAR(12) NOT NULL UNIQUE,
+	`pu_no` VARCHAR(12) UNIQUE COMMENT 'Format: P-YEARXXXXXX',
 	`date` DATE NOT NULL,
 	`reason` MEDIUMTEXT DEFAULT NULL,
 	`discount` INTEGER UNSIGNED DEFAULT NULL,
-	`amount` INTEGER NOT NULL,
+	`amount` INTEGER,
 	`staff_id` INTEGER NOT NULL,
 	PRIMARY KEY(`pu_id`)
 );
@@ -98,7 +98,7 @@ CREATE TABLE IF NOT EXISTS `Purchase_details` (
 	`goods_id` INTEGER NOT NULL,
 	`unit` INTEGER UNSIGNED NOT NULL DEFAULT 0,
 	`price` INTEGER UNSIGNED NOT NULL,
-	`amount` INTEGER UNSIGNED NOT NULL,
+	`amount` INTEGER UNSIGNED,
 	PRIMARY KEY(`pu_id`, `goods_id`)
 );
 
