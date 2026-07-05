@@ -1,0 +1,328 @@
+{
+  "Staff": [
+    {
+      "_ref": "staff_1",
+      "name": "吳秋香",
+      "dept": "管理層",
+      "phone": "0727420875"
+    },
+    {
+      "_ref": "staff_2",
+      "name": "黄子恩",
+      "dept": "CS",
+      "phone": "0682956644"
+    },
+    {
+      "_ref": "staff_3",
+      "name": "張俊賢",
+      "dept": "管理層",
+      "phone": "0937960903"
+    },
+    {
+      "_ref": "staff_4",
+      "name": "姚正雄",
+      "dept": "CS",
+      "phone": "03598767195"
+    },
+    {
+      "_ref": "staff_5",
+      "name": "黃家銘",
+      "dept": "CS",
+      "phone": "0077491812"
+    },
+    {
+      "_ref": "staff_6",
+      "name": "王秀梅",
+      "dept": "管理層",
+      "phone": "0147235667"
+    },
+    {
+      "_ref": "staff_7",
+      "name": "林惠玲",
+      "dept": "管理層",
+      "phone": "018474222"
+    },
+    {
+      "_ref": "staff_8",
+      "name": "李怡君",
+      "dept": "管理層",
+      "phone": "0905531476"
+    },
+    {
+      "_ref": "staff_9",
+      "name": "王麗雪",
+      "dept": "CS",
+      "phone": "032848797"
+    },
+    {
+      "_ref": "staff_10",
+      "name": "阿陳",
+      "dept": "清潔部門",
+      "phone": "032848797"
+    }
+  ],
+  "Customer": [
+    {
+      "_ref": "cust_1",
+      "co_name": "衣優庫（Nuiqlo）資訊有限公司",
+      "contact_name": "林玉英",
+      "phone": "08617287160",
+      "staff_id": "@staff_1"
+    },
+    {
+      "_ref": "cust_2",
+      "co_name": "台灣迪奧汽車",
+      "contact_name": "陳志豪",
+      "phone": "0972768754",
+      "staff_id": "@staff_9"
+    },
+    {
+      "_ref": "cust_3",
+      "co_name": "發聯科技股份有限公司",
+      "contact_name": "侯秀英",
+      "phone": "0529039970",
+      "staff_id": "@staff_8"
+    },
+    {
+      "_ref": "cust_4",
+      "co_name": "台灣雅萊（Y'ORÉAL）有限公司",
+      "contact_name": "孫淑惠",
+      "phone": "0914272596",
+      "staff_id": "@staff_6"
+    }
+  ],
+  "Supplier": [
+    {
+      "_ref": "sup_1",
+      "co_name": "邦城文化事業有限公司",
+      "contact_name": "林志宏",
+      "phone": "0467867834"
+    },
+    {
+      "_ref": "sup_2",
+      "co_name": "台灣士賓",
+      "contact_name": "郭文華",
+      "phone": "036161054"
+    },
+    {
+      "_ref": "sup_3",
+      "co_name": "發聯科技有限公司",
+      "contact_name": "張碧霞",
+      "phone": "0978467554"
+    },
+    {
+      "_ref": "sup_4",
+      "co_name": "榮長海運資訊有限公司",
+      "contact_name": "陳玉英",
+      "phone": "06269691940"
+    }
+  ],
+  "Invertory": [
+    {
+      "_ref": "inv_1",
+      "name": "橡皮擦",
+      "quantity": 2,
+      "price": 51,
+      "sup_id": "@sup_3"
+    },
+    {
+      "_ref": "inv_2",
+      "name": "筆記本",
+      "quantity": 1,
+      "price": 73,
+      "sup_id": "@sup_2"
+    },
+    {
+      "_ref": "inv_3",
+      "name": "釘書機",
+      "quantity": 10,
+      "price": 65,
+      "sup_id": "@sup_4"
+    },
+    {
+      "_ref": "inv_4",
+      "name": "剪刀",
+      "quantity": 7,
+      "price": 56,
+      "sup_id": "@sup_3"
+    },
+    {
+      "_ref": "inv_5",
+      "name": "原子筆",
+      "quantity": 8,
+      "price": 42,
+      "sup_id": "@sup_3"
+    },
+    {
+      "_ref": "inv_6",
+      "name": "橡皮擦",
+      "quantity": 6,
+      "price": 37,
+      "sup_id": "@sup_4"
+    },
+    {
+      "_ref": "inv_7",
+      "name": "筆記本",
+      "quantity": 4,
+      "price": 76,
+      "sup_id": "@sup_4"
+    },
+    {
+      "_ref": "inv_8",
+      "name": "釘書機",
+      "quantity": 7,
+      "price": 25,
+      "sup_id": "@sup_4"
+    },
+    {
+      "_ref": "inv_9",
+      "name": "剪刀",
+      "quantity": 1,
+      "price": 50,
+      "sup_id": "@sup_2"
+    }
+  ],
+  "Purchase": [
+    {
+      "_ref": "pur_1",
+      "date": "2026-07-09",
+      "amount": 199,
+      "staff_id": "@staff_5"
+    },
+    {
+      "_ref": "pur_2",
+      "date": "2026-07-04",
+      "amount": 374,
+      "staff_id": "@staff_6"
+    },
+    {
+      "_ref": "pur_3",
+      "date": "2026-07-07",
+      "amount": 495,
+      "staff_id": "@staff_4"
+    },
+    {
+      "_ref": "pur_4",
+      "date": "2026-07-06",
+      "amount": 260,
+      "staff_id": "@staff_9"
+    }
+  ],
+  "Order": [
+    {
+      "_ref": "order_1",
+      "date": "2026-07-08",
+      "staff_id": "@staff_8",
+      "cust_id": "@cust_4"
+    },
+    {
+      "_ref": "order_2",
+      "date": "2026-07-05",
+      "staff_id": "@staff_8",
+      "cust_id": "@cust_1"
+    },
+    {
+      "_ref": "order_3",
+      "date": "2026-07-06",
+      "staff_id": "@staff_10",
+      "cust_id": "@cust_3"
+    },
+    {
+      "_ref": "order_4",
+      "date": "2026-07-08",
+      "staff_id": "@staff_9",
+      "cust_id": "@cust_2"
+    }
+  ],
+  "Sequences": [
+    {
+      "name": "Order",
+      "year": "2026",
+      "last_num": "5"
+    },
+    {
+      "name": "Purchase",
+      "year": "2026",
+      "last_num": "5"
+    }
+  ],
+  "Promotion": [],
+  "Promotion_details": [],
+  "Order_details": [
+    {
+      "order_id": "@order_2",
+      "goods_id": "@inv_1",
+      "unit": 2,
+      "price": 72,
+      "amount": 144
+    },
+    {
+      "order_id": "@order_3",
+      "goods_id": "@inv_9",
+      "unit": 1,
+      "price": 83,
+      "amount": 83
+    },
+    {
+      "order_id": "@order_1",
+      "goods_id": "@inv_3",
+      "unit": 1,
+      "price": 88,
+      "amount": 88
+    },
+    {
+      "order_id": "@order_3",
+      "goods_id": "@inv_8",
+      "unit": 4,
+      "price": 92,
+      "amount": 368
+    }
+  ],
+  "Purchase_details": [
+    {
+      "pu_id": "@pur_1",
+      "goods_id": "@inv_8",
+      "unit": 2,
+      "price": 34,
+      "amount": 68
+    },
+    {
+      "pu_id": "@pur_3",
+      "goods_id": "@inv_7",
+      "unit": 2,
+      "price": 44,
+      "amount": 88
+    },
+    {
+      "pu_id": "@pur_2",
+      "goods_id": "@inv_5",
+      "unit": 4,
+      "price": 77,
+      "amount": 308
+    },
+    {
+      "pu_id": "@pur_4",
+      "goods_id": "@inv_3",
+      "unit": 2,
+      "price": 99,
+      "amount": 198
+    }
+  ],
+  "login_info": [
+    {
+      "staff_id": "@staff_1",
+      "password": "test123",
+      "role": "admin"
+    },
+    {
+      "staff_id": "@staff_2",
+      "password": "test123",
+      "role": "staff"
+    },
+    {
+      "staff_id": "@staff_3",
+      "password": "test123",
+      "role": "staff"
+    }
+  ]
+}
