@@ -1,0 +1,88 @@
+import mysql.connector
+from flask import Flask, Blueprint, jsonify, request
+from db import get_connection
+
+staff_bp = Blueprint("staff", __name__)
+
+@staff_bp.route("/staff", methods = ["get"])
+def show_all():
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute("select * from `Staff`")
+        result = cursor.fetchall()
+        return jsonify(result)
+    
+    except mysql.connector.Error as err:
+        conn.rollback()
+        return jsonify({"error": str(err)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+@staff_bp.route("/staff", methods = ["post"])
+def create_staff():
+    data = request.get_json()
+    name = data.get["name"]
+    dept = data.get["dept"]
+    phone = data.get("phone")
+    if not dept:
+        return jsonify({"error": "dept must be fill in"}), 400
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "insert into `Staff` (name, dept, phone) VALUES (%s, %s, %s)",
+            (name, dept, phone)
+        )
+
+        num = cursor.lastrowid
+        staff_no = f'CS-{num:06d}'
+        cursor.execute("update `Staff` set staff_no = %s where staff_id = %s", (staff_no, num))
+        conn.commit()
+        return jsonify({"message": "create successed", "staff_id": num}), 201
+
+    except mysql.connector.Error as err:
+        conn.rollback()
+        return jsonify({"error": str(err)}), 500
+    
+    finally:
+        cursor.close()
+        conn.close()
+
+@staff_bp.route("/staff/<int:staff_id>", methods = ["put"])
+def update_staff(staff_id):
+    data = request.get_json(silent=True) or {}
+    col = []
+    val = []
+    if "name" in data:
+        col.append("name = %s")
+        val.append(data["name"])
+    if "phone" in data:
+        col.append("phone = %s")
+        val.append(data["phone"])
+    if "dept" in data:
+        col.append("dept = %s")
+        val.append(data["dept"])
+    if "is_active" in data:
+        col.append("is_active = %s")
+        val.append(data["is_active"])
+    val.append(staff_id)
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        sql_instr = f"update `Staff` set {', '.join(col)} where staff_id = %s"
+        cursor.execute(sql_instr, tuple(val))
+        conn.commit()
+        return jsonify({"message": "update successed", "staff_id": staff_id}), 200
+
+    except mysql.connector.Error as err:
+        conn.rollback()
+        return jsonify({"error": str(err)}), 500
+    
+    finally:
+        cursor.close()
+        conn.close()
