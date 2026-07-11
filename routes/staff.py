@@ -27,8 +27,8 @@ def show_all():
 @admin_required
 def create_staff():
     data = request.get_json()
-    name = data.get["name"]
-    dept = data.get["dept"]
+    name = data.get("name")
+    dept = data.get("dept")
     phone = data.get("phone")
     if not dept:
         return jsonify({"error": "dept must be fill in"}), 400
@@ -78,11 +78,17 @@ def update_staff(staff_id):
     conn = get_connection()
     cursor = conn.cursor()
     try:
-        sql_instr = f"update `Staff` set {', '.join(col)} where staff_id = %s"
+        # firm ID exists
+        cursor.execute("select * from `Staff` where staff_id = %s", (staff_id, ))
+        existing = cursor.fetchone()
+        if not existing:
+            return jsonify({"message": "ID doesn't exist", "staff_id": staff_id}), 404
+
+        sql_instr = f"update `Staff` set {', '.join(col)} where staff_id = %s"    
         cursor.execute(sql_instr, tuple(val))
         conn.commit()
         if cursor.rowcount == 0:
-            return jsonify({"message": "This id doesn't exist", "staff_id": staff_id}), 404
+            return jsonify({"message": "Not any update", "staff_id": staff_id}), 400
         return jsonify({"message": "update successed", "staff_id": staff_id}), 200
 
     except mysql.connector.Error as err:
