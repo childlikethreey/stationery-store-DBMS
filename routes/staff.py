@@ -77,6 +77,8 @@ def update_staff(staff_id):
         sql_instr = f"update `Staff` set {', '.join(col)} where staff_id = %s"
         cursor.execute(sql_instr, tuple(val))
         conn.commit()
+        if cursor.rowcount == 0:
+            return jsonify({"message": "This id doesn't exist", "staff_id": staff_id}), 404
         return jsonify({"message": "update successed", "staff_id": staff_id}), 200
 
     except mysql.connector.Error as err:
