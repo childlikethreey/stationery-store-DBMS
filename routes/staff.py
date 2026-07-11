@@ -1,10 +1,12 @@
 import mysql.connector
 from flask import Flask, Blueprint, jsonify, request
 from db import get_connection
+from routes.auth_required import admin_required
 
 staff_bp = Blueprint("staff", __name__)
 
 @staff_bp.route("/staff", methods = ["get"])
+@admin_required
 def show_all():
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
@@ -22,6 +24,7 @@ def show_all():
         conn.close()
 
 @staff_bp.route("/staff", methods = ["post"])
+@admin_required
 def create_staff():
     data = request.get_json()
     name = data.get["name"]
@@ -53,6 +56,7 @@ def create_staff():
         conn.close()
 
 @staff_bp.route("/staff/<int:staff_id>", methods = ["put"])
+@admin_required
 def update_staff(staff_id):
     data = request.get_json(silent=True) or {}
     col = []
@@ -77,6 +81,8 @@ def update_staff(staff_id):
         sql_instr = f"update `Staff` set {', '.join(col)} where staff_id = %s"
         cursor.execute(sql_instr, tuple(val))
         conn.commit()
+        if cursor.rowcount == 0:
+            return jsonify({"message": "This id doesn't exist", "staff_id": staff_id}), 404
         return jsonify({"message": "update successed", "staff_id": staff_id}), 200
 
     except mysql.connector.Error as err:
