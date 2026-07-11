@@ -5,7 +5,7 @@ from routes.auth_required import login_required
 
 pur_bp = Blueprint("purchase", __name__)
 
-@sup_bp.route("/pur", methods = ["get"])
+@pur_bp.route("/pur", methods = ["get"])
 def show_all_order():
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
