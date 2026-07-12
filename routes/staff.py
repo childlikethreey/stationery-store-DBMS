@@ -2,6 +2,7 @@ import mysql.connector
 from flask import Flask, Blueprint, jsonify, request
 from db import get_connection
 from routes.auth_required import admin_required
+import bcrypt
 
 staff_bp = Blueprint("staff", __name__)
 
@@ -44,6 +45,7 @@ def create_staff():
         num = cursor.lastrowid
         staff_no = f'CS-{num:06d}'
         cursor.execute("update `Staff` set staff_no = %s where staff_id = %s", (staff_no, num))
+
         conn.commit()
         return jsonify({"message": "create successed", "staff_id": num}), 201
 
@@ -54,6 +56,34 @@ def create_staff():
     finally:
         cursor.close()
         conn.close()
+
+@staff_bp.route("/staff/<int:staff_id>/account", methods = ["post"])
+@admin_required
+def create_new_acc(staff_id):
+    data = request.get_json(silent=True) or {}
+    role = data["role"]
+
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute("select staff_no, dept from `Staff` where staff_id = %s", (staff_id, ))
+        user = cursor.fetchone()
+        if user["dept"] == "清潔部門":
+            return jsonify({"message": "清潔人員不能建立帳號"}), 403
+        pw = "test123"
+        pw_hash = bcrypt.hashpw(pw.encode("utf-8"), bcrypt.gensalt())
+        cursor.execute("insert into `login_info` (staff_id, pw_hash, role) values (%s, %s, %s)", (staff_id, pw_hash, role))
+        conn.commit()
+        return jsonify({"message": "create successed\n Please remind staff change the password", "staff_id": staff_id, "password": "test123"}), 200
+
+    except mysql.connector.Error as err:
+        conn.rollback()
+        return jsonify({"error": str(err)}), 500
+    
+    finally:
+        cursor.close()
+        conn.close()
+        
 
 @staff_bp.route("/staff/<int:staff_id>", methods = ["put"])
 @admin_required
