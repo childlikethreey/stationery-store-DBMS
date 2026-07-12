@@ -7,7 +7,7 @@ import re
 
 staff_bp = Blueprint("staff", __name__)
 
-name_fm = re.compile(r"^[a-zA-Z\u4e00-\u9fff]{1,100}$")
+name_fm = re.compile(r"^[a-zA-Z\u4e00-\u9fff\s]{1,100}$")
 phone_fm = re.compile(r"^[\d\-\(\)]{8,30}$")
 
 @staff_bp.route("/staff", methods = ["get"])
