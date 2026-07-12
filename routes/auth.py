@@ -1,7 +1,8 @@
 import mysql.connector
 from flask import Blueprint, request, jsonify, session
-from werkzeug.security import check_password_hash
 from db import get_connection
+from routes.auth_required import login_required
+import bcrypt
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -25,7 +26,7 @@ def staff_login():
         )
         user = cursor.fetchone()
 
-        if not (user or check_password_hash(user["pw_hash"], pw)):
+        if not user or not bcrypt.checkpw(pw.encode("utf-8"), user["pw_hash"].encode("utf-8")):
             return jsonify({"message": "wrong staff no or password"}), 401
         if not user["is_active"]:
             return jsonify({"message": "this staff is not work here already"}), 403
@@ -47,3 +48,37 @@ def staff_login():
 def staff_logout():
     session.clear()
     return jsonify({"message": "logout"}), 200
+
+@auth_bp.route("/account", methods = ["patch"])
+@login_required
+def change_pw():
+    data = request.get_json(silent=True) or {}
+    old_pw = data.get("old_pw")
+    new_pw = data.get("new_pw")
+    if not old_pw or not new_pw:
+        return jsonify({"message": "please fill in old password and new password"}), 400
+    
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+       cursor.execute("select * from `login_info` where staff_id = %s", (session["staff_id"], ))
+       user = cursor.fetchone()
+
+       if not bcrypt.checkpw(old_pw.encode("utf-8"), user["pw_hash"].encode("utf-8")):
+           return jsonify({"message": "wrong old password"}), 400
+       if old_pw == new_pw:
+           return jsonify({"message": "new password cannnot same as old password"}), 400
+       
+       temp = bcrypt.hashpw(new_pw.encode("utf-8"), bcrypt.gensalt())
+       cursor.execute("update `login_info` set pw_hash = %s where staff_id = %s", (temp, session["staff_id"]))
+       conn.commit()
+       return jsonify({"message": "change password successed"}), 200
+    
+    except mysql.connector.Error as err:
+        conn.rollback()
+        return jsonify({"error": str(err)}), 500
+    
+    finally:
+        cursor.close()
+        conn.close()
+    
