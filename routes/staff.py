@@ -8,12 +8,30 @@ staff_bp = Blueprint("staff", __name__)
 
 @staff_bp.route("/staff", methods = ["get"])
 @admin_required
-def show_all():
+def show_all_staff():
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
     try:
-        cursor.execute("select * from `Staff`")
+        cursor.execute("select staff_no, name, phone, dept, is_active from `Staff`")
         result = cursor.fetchall()
+        return jsonify(result)
+    
+    except mysql.connector.Error as err:
+        conn.rollback()
+        return jsonify({"error": str(err)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+@staff_bp.route("/staff/<int:staff_id>", methods = ["get"])
+@admin_required
+def show_one_staff(staff_id):
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute("select staff_no, name, phone, dept, is_active from `Staff` where staff_id = %s", (staff_id, ))
+        result = cursor.fetchone()
         return jsonify(result)
     
     except mysql.connector.Error as err:
