@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS `Staff` (
 	`staff_id` INTEGER NOT NULL AUTO_INCREMENT,
 	`staff_no` VARCHAR(9) UNIQUE COMMENT 'Format: CS-XXXXXX(6 Xs)',
-	`name` VARCHAR(100),
+	`name` VARCHAR(100) NOT NULL,
 	`dept` VARCHAR(50) NOT NULL,
 	`phone` VARCHAR(30),
 	`is_active` BOOLEAN NOT NULL DEFAULT true,
