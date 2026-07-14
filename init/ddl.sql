@@ -69,6 +69,8 @@ CREATE TABLE IF NOT EXISTS `Invertory` (
 	`sup_id` INTEGER NOT NULL,
 	`stop_purchase` BOOLEAN NOT NULL DEFAULT False,
 	PRIMARY KEY(`goods_id`)
+	CONSTRAINT `invertory_chk_price_positive` CHECK (`price` > 0),
+	CONSTRAINT `invertory_chk_quantity` CHECK (`quantity` >= 0)
 );
 
 
