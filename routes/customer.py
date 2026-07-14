@@ -2,7 +2,7 @@ import mysql.connector
 from flask import Flask, Blueprint, request, jsonify, session
 from db import get_connection
 from routes.auth_required import login_required, admin_required
-from routes.commonly_used import coname_fm, name_fm, phone_fm, staff_no_fm, check_fm, not_empty, must_fill_in
+from routes.commonly_used import coname_fm, name_fm, phone_fm, staff_no_fm, mix_chk
 
 cust_bp = Blueprint("customer", __name__)
 
@@ -91,13 +91,8 @@ def create_customer():
     data = request.get_json(silent=True) or {}
     val = {key: data.get(key) for key in col_and_fm}
 
-    # 捉必填, 不能空字串, 格式不對
-    error1 = must_fill_in(required_col, val)
-    if error1: return error1
-    error2 = not_empty(required_col, val)
-    if error2: return error2
-    error3 = check_fm(col_and_fm, val)
-    if error3: return error3
+    error = mix_chk(required_col, col_and_fm, val, True)
+    if error: return error
 
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
@@ -144,14 +139,8 @@ def update_customer(cust_id):
     data = request.get_json(silent=True) or {}
     val = {key: data.get(key) for key in col_and_fm}
     
-    # 1. 捉必填的不能空字串
-    error1 = not_empty(required_col, val)
-    if error1:
-        return error1
-    # 2. 捉格式不對的
-    error2 = check_fm(col_and_fm, val)
-    if error2:
-        return error2
+    error = mix_chk(required_col, col_and_fm, val, False)
+    if error: return error
     
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
