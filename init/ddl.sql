@@ -64,11 +64,13 @@ CREATE TABLE IF NOT EXISTS `Customer` (
 CREATE TABLE IF NOT EXISTS `Invertory` (
 	`goods_id` INTEGER NOT NULL AUTO_INCREMENT,
 	`name` VARCHAR(255) NOT NULL,
-	`quantity` INTEGER NOT NULL DEFAULT 0,
+	`quantity` INTEGER  NOT NULL DEFAULT 0,
 	`price` INTEGER NOT NULL DEFAULT 0,
 	`sup_id` INTEGER NOT NULL,
 	`stop_purchase` BOOLEAN NOT NULL DEFAULT False,
 	PRIMARY KEY(`goods_id`)
+	CONSTRAINT `invertory_chk_price` CHECK (`price` >= 0),
+	CONSTRAINT `invertory_chk_quantity` CHECK (`quantity` >= 0)
 );
 
 
