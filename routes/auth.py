@@ -3,6 +3,7 @@ from flask import Blueprint, request, jsonify, session
 from db import get_connection
 from routes.auth_required import login_required
 import bcrypt
+from routes.commonly_used import must_fill_in
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -11,8 +12,8 @@ def staff_login():
     data = request.get_json(silent=True) or {}
     staff_no = data.get("staff_no")
     pw = data.get("pw")
-    if not (staff_no or pw):
-        return jsonify({"message": "please fill in staff no and password"}), 400
+    if not staff_no or not pw:
+        return jsonify({"message": "All column must be filled in"}), 400
     
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
@@ -56,7 +57,7 @@ def change_pw():
     old_pw = data.get("old_pw")
     new_pw = data.get("new_pw")
     if not old_pw or not new_pw:
-        return jsonify({"message": "please fill in old password and new password"}), 400
+        return jsonify({"message": "old / new password must be filled in"}), 400
     
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
