@@ -2,13 +2,25 @@ import mysql.connector
 from flask import Flask, Blueprint, request, jsonify
 from db import get_connection
 from routes.auth_required import login_required, admin_required
-import re
+from routes.commonly_used import coname_fm, name_fm, phone_fm, mix_chk
 
 sup_bp = Blueprint("supplier", __name__)
 
-coname_fm = re.compile(r"^[a-zA-Z\u4e00-\u9fff\s\.]{1,255}$")
-name_fm = re.compile(r"^[a-zA-Z\u4e00-\u9fff\s]{1,100}$")
-phone_fm = re.compile(r"^[\d\-\(\)]{8,30}$")
+col_and_fm = {
+    "co_name": coname_fm,
+    "contact_name": name_fm,
+    "phone": phone_fm
+}
+
+def get_one_sup(cursor, sup_id: int) -> tuple[dict | None, tuple | None]:
+    cursor.execute("select * from `Supplier` where sup_id = %s", (sup_id, ))
+    sup = cursor.fetchone()
+    if not sup:
+        return None, (jsonify({"error": "This supplier doesn't exist"}), 404)
+    return sup, None
+
+required_col = ("co_name", "phone")
+
 
 @sup_bp.route("/sup", methods = ["get"])
 @login_required
@@ -17,7 +29,7 @@ def show_all_supplier():
     cursor = conn.cursor(dictionary=True)
 
     try:
-        cursor.execute("select co_name, contact_name, phone from `Supplier`")
+        cursor.execute("select * from `Supplier`")
         result = cursor.fetchall()
         return jsonify(result), 200
 
@@ -29,6 +41,7 @@ def show_all_supplier():
         cursor.close()
         conn.close()
 
+
 @sup_bp.route("/sup/<int:sup_id>", methods = ["get"])
 @login_required
 def show_one_supplier(sup_id):
@@ -36,9 +49,11 @@ def show_one_supplier(sup_id):
     cursor = conn.cursor(dictionary=True)
 
     try:
-        cursor.execute("select co_name, contact_name, phone from `Supplier` where sup_id = %s", (sup_id,))
-        result = cursor.fetchone()
-        return jsonify(result), 200
+        sup, error = get_one_sup(cursor, sup_id)
+        if error:
+            return error
+        else:
+            return jsonify(sup), 200
 
     except mysql.connector.Error as err:
         conn.rollback()
@@ -48,28 +63,28 @@ def show_one_supplier(sup_id):
         cursor.close()
         conn.close()
 
+
 @sup_bp.route("/sup", methods = ["post"])
 @login_required
-def create_new_suplier():
+def create_new_supplier():
     data = request.get_json(silent=True) or {}
-    co_name = data.get("co_name")
-    contact_name = data.get("contact_name")
-    phone = data.get("phone")
+    val = {key: data.get(key) for key in col_and_fm}
 
-    if not co_name or not coname_fm.match(co_name):
-        return jsonify({"error": "Company Name isn't being filled in or format is not correct"}), 400
-    if contact_name and not name_fm.match(contact_name):
-        return jsonify({"error": "'Contact Name' format is not correct"}), 400
-    if not phone or not phone_fm.match(phone):
-        return jsonify({"error": "Phnoe no. isn't being filled in or format is not correct"}), 400
+    error = mix_chk(required_col, col_and_fm, val, True)
+    if error: return error
     
     conn = get_connection()
     cursor = conn.cursor()
     try: 
-        if not contact_name:
-            cursor.execute("insert into `Supplier` (co_name, phone) values (%s, %s)", (co_name, phone))
-        else:
-            cursor.execute("insert into `Supplier` (co_name, contact_name, phone) values (%s, %s, %s)", (co_name, contact_name, phone))
+        columns = []
+        values = []
+        for a, b in val.items():
+            if b is None:
+                continue
+            columns.append(a)
+            values.append(b)
+        s_num = ", ".join(["%s"] * len(values))
+        cursor.execute(f"insert into `Supplier` ({', '.join(columns)}) values ({s_num})", tuple(values))
         conn.commit()
         return jsonify({"message": "create successed"}), 201
         
@@ -81,40 +96,36 @@ def create_new_suplier():
         cursor.close()
         conn.close()
 
+
 @sup_bp.route("/sup/<int:sup_id>", methods = ["put"])
 @admin_required
 def update_supplier(sup_id):
     data = request.get_json(silent=True) or {}
-    col = []
-    val = []
-    if "co_name" in data:
-        if not coname_fm.match(data["co_name"]):
-            return jsonify({"error": "'Company Name' format is not correct"}), 400
-        col.append("co_name = %s")
-        val.append(data["co_name"])
-    if "contact_name" in data:
-        if not name_fm.match(data["contact_name"]):
-            return jsonify({"error": "'Contact Name' format is not correct"}), 400
-        col.append("contact_name = %s")
-        val.append(data["contact_name"])
-    if "phone" in data:
-        if not phone_fm.match(data["phone"]):
-            return jsonify({"error": "Phone format is not correct"}), 400
-        col.append("phone = %s")
-        val.append(data["phone"])
-    val.append(sup_id)
+    val = {key: data.get(key) for key in col_and_fm}
+
+    error = mix_chk(required_col, col_and_fm, val, False)
+    if error: return error
 
     conn = get_connection()
     cursor = conn.cursor()
     try:
         # firm ID exists
-        cursor.execute("select * from `Supplier` where sup_id = %s", (sup_id, ))
-        existing = cursor.fetchone()
-        if not existing:
-            return jsonify({"error": "ID doesn't exist", "sup_id": sup_id}), 404
+        _, error = get_one_sup(cursor, sup_id)
+        if error: return error
 
-        sql_instr = f"update `Supplier` set {', '.join(col)} where sup_id = %s"    
-        cursor.execute(sql_instr, tuple(val))
+        columns = []
+        values = []
+        for a, b in val.items():
+            if b is None:
+                continue
+            if a == "contact_name" and b == "":
+                columns.append("contact_name = %s")
+                values.append(None)
+            else:
+                columns.append(f"{a} = %s")
+                values.append(b)
+        values.append(sup_id)
+        cursor.execute(f"update `Supplier` set {", ". join(columns)} where sup_id = %s", tuple(values))
         conn.commit()
         if cursor.rowcount == 0:
             return jsonify({"message": "Not any update", "sup_id": sup_id}), 400

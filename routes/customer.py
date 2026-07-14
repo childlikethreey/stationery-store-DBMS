@@ -179,6 +179,8 @@ def update_customer(cust_id):
     
         cursor.execute(f"update `Customer` set {', '.join(columns)} where cust_id = %s", tuple(values))
         conn.commit()
+        if cursor.rowcount == 0:
+            return jsonify({"message": "Not any update", "cust_id": cust_id}), 400
         return jsonify({"message": "update successed"}), 200
 
     except mysql.connector.Error as err:
