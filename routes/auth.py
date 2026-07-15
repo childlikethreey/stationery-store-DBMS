@@ -30,7 +30,7 @@ def staff_login():
         if not user or not bcrypt.checkpw(pw.encode("utf-8"), user["pw_hash"].encode("utf-8")):
             return jsonify({"message": "wrong staff no or password"}), 401
         if not user["is_active"]:
-            return jsonify({"message": "this staff is not work here already"}), 403
+            return jsonify({"message": "This employee already quit"}), 403
 
         session["staff_id"] = user["staff_id"]
         session["role"] = user["role"]
