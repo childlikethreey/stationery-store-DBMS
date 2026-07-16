@@ -56,7 +56,7 @@ def get_one(cursor, table_name: str, show_col: tuple, id_colname: str, id: int, 
      
     if is_role_limit:
         cols += " ,staff_id"
-    cursor.execute(f"select {cols} from {table_name} where {id_colname} = %s", (id, ))
+    cursor.execute(f"select {cols} from `{table_name}` where {id_colname} = %s", (id, ))
     result = cursor.fetchone()
 
     if not result:

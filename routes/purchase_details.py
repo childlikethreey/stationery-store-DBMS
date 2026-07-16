@@ -75,7 +75,7 @@ def add_detail(pu_id):
     with connect_manger() as cursor:
         try:
             # firm pu_id exist & role limit
-            _, error1 = get_one(cursor, table, pur_exist_col, "pu_id", pu_id, True)
+            _, error1 = get_one(cursor, "Purchase", pur_exist_col, "pu_id", pu_id, True)
             if error1: return error1
 
             # firm goods_id exist & not stop purchase
@@ -119,7 +119,7 @@ def update_detail(pu_id, goods_id):
     with connect_manger() as cursor:
         try:
             # firm pu_id exist & role limit
-            _, error1 = get_one(cursor, table, pur_exist_col, "pu_id", pu_id, True)
+            _, error1 = get_one(cursor, "Purchase", pur_exist_col, "pu_id", pu_id, True)
             if error1: return error1
 
             cursor.execute(
@@ -165,7 +165,7 @@ def delete_detail(pu_id, goods_id):
     with connect_manger() as cursor:
         try:
             # firm pu_id exist & role limit
-            _, error1 = get_one(cursor, table, pur_exist_col, "pu_id", pu_id, True)
+            _, error1 = get_one(cursor, "Purchase", pur_exist_col, "pu_id", pu_id, True)
             if error1: return error1
 
             cursor.execute(
