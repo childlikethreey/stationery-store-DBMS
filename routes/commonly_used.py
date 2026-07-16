@@ -52,9 +52,8 @@ def get_all(cursor, table_name: str, show_col: tuple, is_role_limit: bool) -> tu
         
 # 方便每個表 select one 順便處理 role limit
 def get_one(cursor, table_name: str, show_col: tuple, id_colname: str, id: int, is_role_limit: bool) -> tuple:
-    if id_colname in show_col:
-        _ = show_col.pop(id_colname)
-    cols = ", ".join(show_col) 
+    cols = ", ".join(show_col)
+     
     if is_role_limit:
         cols += " ,staff_id"
     cursor.execute(f"select {cols} from {table_name} where {id_colname} = %s", (id, ))
