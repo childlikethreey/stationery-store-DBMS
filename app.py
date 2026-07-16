@@ -9,6 +9,7 @@ from routes.invertory import inv_bp
 from routes.supplier import sup_bp
 from routes.purchase import pur_bp
 from routes.promotion import promo_bp
+from routes.purchase_details import pur_detail_bp
 
 load_dotenv()
 app = Flask(__name__)
@@ -22,6 +23,7 @@ app.register_blueprint(cust_bp)
 app.register_blueprint(inv_bp)
 app.register_blueprint(sup_bp)
 app.register_blueprint(pur_bp)
+app.register_blueprint(pur_detail_bp)
 app.register_blueprint(promo_bp)
 
 if __name__ == "__main__":

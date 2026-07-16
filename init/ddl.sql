@@ -99,7 +99,7 @@ CREATE TABLE IF NOT EXISTS `Purchase_details` (
 	`pu_id` INTEGER NOT NULL,
 	`goods_id` INTEGER NOT NULL,
 	`unit` INTEGER UNSIGNED NOT NULL DEFAULT 0,
-	`price` INTEGER UNSIGNED NOT NULL,
+	`price` INTEGER UNSIGNED,
 	`amount` INTEGER UNSIGNED,
 	PRIMARY KEY(`pu_id`, `goods_id`)
 );
