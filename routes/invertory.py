@@ -1,161 +1,79 @@
-import mysql.connector
-from flask import Flask, Blueprint, request, jsonify
-from db import get_connection
+from flask import Blueprint, request, jsonify
+from db import connect_manger
 from routes.auth_required import login_required, admin_required
-from routes.commonly_used import goods_name_fm
-from pydantic import BaseModel, ValidationError, Field
+from pydantic import BaseModel, Field
 from typing import Optional
-'''
-col_and_fm = {
-    "name": goods_name_fm
-}
-'''
-# required_col = ("name", "sup_id")
-# all_col = ("name", "quantity", "price", "sup_id", "stop_purchase")
+from routes.helpers import (
+    get_one, get_all, empty_str_to_none,
+    goods_name_fm)
 
-class inv_type_create(BaseModel):
+table = "`Invertory`"
+select_col = ("*", )
+
+class type_create(BaseModel):
     name: str = Field(pattern=goods_name_fm)
-    price: int = 0
-    sup_id: int
-    stop_purchase: bool = False
-
-class inv_type_update(BaseModel):
+    price: int = Field(default=0, ge=0)
+    sup_id: int = Field(ge=0)
+    stop_purchase: bool = Field(default=False)
+  
+class type_update(BaseModel):
     name: Optional[str] = Field(default=None, pattern=goods_name_fm)
     price: Optional[int] = Field(default=None, ge=0)
-    sup_id: Optional[int] = None
-    stop_purchase: Optional[bool] = None
-
-def get_one_goods(cursor, goods_id: int) -> tuple | None:
-    cursor.execute("select * from `Invertory` where goods_id = %s", (goods_id, ))
-    goods = cursor.fetchone()
-    if not goods:
-        return None, (jsonify({"error": "This goods doesn't exist"}), 404)
-    return goods, None
+    sup_id: Optional[int] = Field(default=None, ge=0)
+    stop_purchase: Optional[bool] = Field(default=None)
 
 
 inv_bp = Blueprint("invertory", __name__)
 
+
 @inv_bp.route("/inv", methods = ["get"])
 @login_required
 def show_all_goods():
-    conn = get_connection()
-    cursor = conn.cursor(dictionary=True)
-
-    try:
-        cursor.execute("select * from `Invertory`")
-        result = cursor.fetchall()
-        return jsonify(result), 200
-
-    except mysql.connector.Error as err:
-        conn.rollback()
-        return jsonify({"error": str(err)}), 500
-    
-    finally:
-        cursor.close()
-        conn.close()
+    with connect_manger() as cursor:
+        result = get_all(cursor, table, select_col)
+        return result
 
 
 @inv_bp.route("/inv/<int:goods_id>", methods = ["get"])
 @login_required
 def show_one_goods(goods_id):
-    conn = get_connection()
-    cursor = conn.cursor(dictionary=True)
-
-    try:
-        goods, error = get_one_goods(cursor, goods_id)
-        if error:return error
-        return jsonify(goods), 200
-
-    except mysql.connector.Error as err:
-        conn.rollback()
-        return jsonify({"error": str(err)}), 500
-    
-    finally:
-        cursor.close()
-        conn.close()
+    with connect_manger() as cursor:
+        result = get_one(cursor, table, select_col, "goods_id", goods_id)
+        return result
 
 
 @inv_bp.route("/inv", methods = ["post"])
 @admin_required
 def create_goods():
-    try:
-        chk = inv_type_create(**request.get_json())
-    except ValidationError as err:
-        return jsonify({"error": err.errors()}), 400
-    data = chk.model_dump()
-    val = {key: data.get(key) for key in data}
+    data_chk = type_create(**request.get_json())
+    data = data_chk.model_dump(exclude_unset=True)
 
-    conn = get_connection()
-    cursor = conn.cursor(dictionary=True)
-    try:
+    with connect_manger() as cursor:
         # firm sup_id exist
-        cursor.execute("select * from `Supplier` where sup_id = %s", (val["sup_id"], ))
-        sup = cursor.fetchone()
-        if not sup:
-            return jsonify({"error": "This supplier doesn't exist"}), 404
-        
-        columns = []
-        values = []
-        for a, b in val.items():
-            if b is None:
-                continue
-            columns.append(a)
-            values.append(b)
-        s_num = ", ".join(["%s"] * len(values))
-        cursor.execute(f"insert into `Invertory` ({', '.join(columns)}) values ({s_num})", tuple(values))        
-        conn.commit()
-        return jsonify({"message": "create successed"}), 201
-        
-    except mysql.connector.Error as err:
-        conn.rollback()
-        return jsonify({"error": str(err)}), 500
-    
-    finally:
-        cursor.close()
-        conn.close() 
+        _ = get_one(cursor, "`Supplier`", ("*", ), "sup_id", data["sup_id"])
+
+        cols = ", ".join(data.keys())
+        s_num = ", ".join(["%s"] * len(data.values()))
+        cursor.execute(f"insert into {table} ({cols}) values ({s_num})", tuple(data.values()))
+        num = cursor.lastrowid
+        return jsonify({"message": "create successed", "goods_id": num}), 201
 
 
 @inv_bp.route("/inv/<int:goods_id>", methods = ["put"])
 @admin_required
 def update_goods(goods_id):
-    try:
-        chk = inv_type_update(**request.get_json())
-    except ValidationError as err:
-        return jsonify({"error": err.errors()}), 400
-    data = chk.model_dump()
-    val = {key: data.get(key) for key in data}
+    data_chk = type_update(**request.get_json())
+    data = data_chk.model_dump(exclude_unset=True)
 
-    conn = get_connection()
-    cursor = conn.cursor(dictionary=True)
-    try:
-        # firm goods_id, sup_id exist
-        _, error = get_one_goods(cursor, goods_id)
-        if error:return error
-        if val["sup_id"]:
-            cursor.execute("select * from `Supplier` where sup_id = %s", (val["sup_id"], ))
-            sup = cursor.fetchone()
-            if not sup:
-                return jsonify({"error": "This supplier doesn't exist"}), 404
-        
-        columns = []
-        values = []
-        for a, b in val.items():
-            if b is None:
-                continue
-            columns.append(f"{a} = %s")
-            values.append(b)
-        values.append(goods_id)
-        
-        cursor.execute(f"update `Invertory` set {", ".join(columns)} where goods_id = %s", tuple(values))        
-        conn.commit()
+    with connect_manger() as cursor:
+        # firm goods_id exist, sup_id exist
+        _ = get_one(cursor, table, select_col, "goods_id", goods_id)
+        if "sup_id" in data:
+            _ = get_one(cursor, "`Supplier`", ("*", ), "sup_id", data["sup_id"])
+            
+        cols = ", ".join([f"{key} = %s" for key in data.keys()])
+        cursor.execute(f"update {table} set {cols} where goods_id = %s", 
+                       tuple(data.values()) + (goods_id, ))
         if cursor.rowcount == 0:
-            return jsonify({"message": "Not any update", "goods_id": goods_id}), 400
-        return jsonify({"message": "update successed"}), 200
-        
-    except mysql.connector.Error as err:
-        conn.rollback()
-        return jsonify({"error": str(err)}), 500
-    
-    finally:
-        cursor.close()
-        conn.close() 
+            return jsonify({"message": "Not any update", "goods_id": goods_id}), 200
+        return jsonify({"message": "update successed", "goods_id": goods_id}), 200
