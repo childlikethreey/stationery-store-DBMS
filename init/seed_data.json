@@ -3,14 +3,14 @@
     {
       "_ref": "staff_1",
       "name": "吳秋香",
-      "dept": "管理層",
-      "phone": "0727420875"
+      "dept": "CS",
+      "phone": "07-27420875"
     },
     {
       "_ref": "staff_2",
       "name": "黄子恩",
-      "dept": "CS",
-      "phone": "0682956644"
+      "dept": "管理層",
+      "phone": "(06) 82956644"
     },
     {
       "_ref": "staff_3",
@@ -22,307 +22,335 @@
       "_ref": "staff_4",
       "name": "姚正雄",
       "dept": "CS",
-      "phone": "03598767195"
+      "phone": "035 98767195"
     },
     {
       "_ref": "staff_5",
       "name": "黃家銘",
       "dept": "CS",
-      "phone": "0077491812"
+      "phone": "(00) 77491812"
     },
     {
       "_ref": "staff_6",
       "name": "王秀梅",
       "dept": "管理層",
-      "phone": "0147235667"
+      "phone": "(01) 47235667"
     },
     {
       "_ref": "staff_7",
       "name": "林惠玲",
       "dept": "管理層",
-      "phone": "018474222"
+      "phone": "01 8474222"
     },
     {
       "_ref": "staff_8",
       "name": "李怡君",
       "dept": "管理層",
-      "phone": "0905531476"
+      "phone": "0905-531476"
     },
     {
       "_ref": "staff_9",
       "name": "王麗雪",
       "dept": "CS",
-      "phone": "032848797"
+      "phone": "03-2848797"
     },
     {
       "_ref": "staff_10",
-      "name": "阿陳",
+      "name": "賴政宏",
+      "dept": "CS",
+      "phone": "06-98958672"
+    },
+    {
+      "_ref": "staff_10",
+      "name": "許柏諺",
       "dept": "清潔部門",
-      "phone": "032848797"
-    }
-  ],
-  "Customer": [
-    {
-      "_ref": "cust_1",
-      "co_name": "衣優庫（Nuiqlo）資訊有限公司",
-      "contact_name": "林玉英",
-      "phone": "08617287160",
-      "staff_id": "@staff_1"
-    },
-    {
-      "_ref": "cust_2",
-      "co_name": "台灣迪奧汽車",
-      "contact_name": "陳志豪",
-      "phone": "0972768754",
-      "staff_id": "@staff_9"
-    },
-    {
-      "_ref": "cust_3",
-      "co_name": "發聯科技股份有限公司",
-      "contact_name": "侯秀英",
-      "phone": "0529039970",
-      "staff_id": "@staff_8"
-    },
-    {
-      "_ref": "cust_4",
-      "co_name": "台灣雅萊（Y'ORÉAL）有限公司",
-      "contact_name": "孫淑惠",
-      "phone": "0914272596",
-      "staff_id": "@staff_6"
-    }
-  ],
-  "Supplier": [
-    {
-      "_ref": "sup_1",
-      "co_name": "邦城文化事業有限公司",
-      "contact_name": "林志宏",
-      "phone": "0467867834"
-    },
-    {
-      "_ref": "sup_2",
-      "co_name": "台灣士賓",
-      "contact_name": "郭文華",
-      "phone": "036161054"
-    },
-    {
-      "_ref": "sup_3",
-      "co_name": "發聯科技有限公司",
-      "contact_name": "張碧霞",
-      "phone": "0978467554"
-    },
-    {
-      "_ref": "sup_4",
-      "co_name": "榮長海運資訊有限公司",
-      "contact_name": "陳玉英",
-      "phone": "06269691940"
-    }
-  ],
-  "Invertory": [
-    {
-      "_ref": "inv_1",
-      "name": "橡皮擦",
-      "quantity": 2,
-      "price": 51,
-      "sup_id": "@sup_3"
-    },
-    {
-      "_ref": "inv_2",
-      "name": "筆記本",
-      "quantity": 1,
-      "price": 73,
-      "sup_id": "@sup_2"
-    },
-    {
-      "_ref": "inv_3",
-      "name": "釘書機",
-      "quantity": 10,
-      "price": 65,
-      "sup_id": "@sup_4"
-    },
-    {
-      "_ref": "inv_4",
-      "name": "剪刀",
-      "quantity": 7,
-      "price": 56,
-      "sup_id": "@sup_3"
-    },
-    {
-      "_ref": "inv_5",
-      "name": "原子筆",
-      "quantity": 8,
-      "price": 42,
-      "sup_id": "@sup_3"
-    },
-    {
-      "_ref": "inv_6",
-      "name": "橡皮擦",
-      "quantity": 6,
-      "price": 37,
-      "sup_id": "@sup_4"
-    },
-    {
-      "_ref": "inv_7",
-      "name": "筆記本",
-      "quantity": 4,
-      "price": 76,
-      "sup_id": "@sup_4"
-    },
-    {
-      "_ref": "inv_8",
-      "name": "釘書機",
-      "quantity": 7,
-      "price": 25,
-      "sup_id": "@sup_4"
-    },
-    {
-      "_ref": "inv_9",
-      "name": "剪刀",
-      "quantity": 1,
-      "price": 50,
-      "sup_id": "@sup_2"
-    }
-  ],
-  "Purchase": [
-    {
-      "_ref": "pur_1",
-      "date": "2026-07-09",
-      "amount": 199,
-      "staff_id": "@staff_5"
-    },
-    {
-      "_ref": "pur_2",
-      "date": "2026-07-04",
-      "amount": 374,
-      "staff_id": "@staff_6"
-    },
-    {
-      "_ref": "pur_3",
-      "date": "2026-07-07",
-      "amount": 495,
-      "staff_id": "@staff_4"
-    },
-    {
-      "_ref": "pur_4",
-      "date": "2026-07-06",
-      "amount": 260,
-      "staff_id": "@staff_9"
-    }
-  ],
-  "Order": [
-    {
-      "_ref": "order_1",
-      "date": "2026-07-08",
-      "staff_id": "@staff_8",
-      "cust_id": "@cust_4"
-    },
-    {
-      "_ref": "order_2",
-      "date": "2026-07-05",
-      "staff_id": "@staff_8",
-      "cust_id": "@cust_1"
-    },
-    {
-      "_ref": "order_3",
-      "date": "2026-07-06",
-      "staff_id": "@staff_10",
-      "cust_id": "@cust_3"
-    },
-    {
-      "_ref": "order_4",
-      "date": "2026-07-08",
-      "staff_id": "@staff_9",
-      "cust_id": "@cust_2"
-    }
-  ],
-  "Sequences": [
-    {
-      "name": "Order",
-      "year": "2026",
-      "last_num": "5"
-    },
-    {
-      "name": "Purchase",
-      "year": "2026",
-      "last_num": "5"
-    }
-  ],
-  "Promotion": [],
-  "Promotion_details": [],
-  "Order_details": [
-    {
-      "order_id": "@order_2",
-      "goods_id": "@inv_1",
-      "unit": 2,
-      "price": 72,
-      "amount": 144
-    },
-    {
-      "order_id": "@order_3",
-      "goods_id": "@inv_9",
-      "unit": 1,
-      "price": 83,
-      "amount": 83
-    },
-    {
-      "order_id": "@order_1",
-      "goods_id": "@inv_3",
-      "unit": 1,
-      "price": 88,
-      "amount": 88
-    },
-    {
-      "order_id": "@order_3",
-      "goods_id": "@inv_8",
-      "unit": 4,
-      "price": 92,
-      "amount": 368
-    }
-  ],
-  "Purchase_details": [
-    {
-      "pu_id": "@pur_1",
-      "goods_id": "@inv_8",
-      "unit": 2,
-      "price": 34,
-      "amount": 68
-    },
-    {
-      "pu_id": "@pur_3",
-      "goods_id": "@inv_7",
-      "unit": 2,
-      "price": 44,
-      "amount": 88
-    },
-    {
-      "pu_id": "@pur_2",
-      "goods_id": "@inv_5",
-      "unit": 4,
-      "price": 77,
-      "amount": 308
-    },
-    {
-      "pu_id": "@pur_4",
-      "goods_id": "@inv_3",
-      "unit": 2,
-      "price": 99,
-      "amount": 198
+      "phone": "(03) 19163997"
     }
   ],
   "login_info": [
     {
       "staff_id": "@staff_1",
       "password": "test123",
-      "role": "admin"
+      "role": "staff"
     },
     {
       "staff_id": "@staff_2",
       "password": "test123",
-      "role": "staff"
+      "role": "admin"
     },
     {
       "staff_id": "@staff_3",
       "password": "test123",
+      "role": "admin"
+    },
+    {
+      "staff_id": "@staff_4",
+      "password": "test123",
       "role": "staff"
+    }
+  ],
+  "Customer": [
+    {
+      "_ref": "cust_1",
+      "co_name": "海鴻精密資訊有限公司",
+      "contact_name": "顏麗卿",
+      "phone": "(00) 35121977",
+      "staff_id": "@staff_9"
+    },
+    {
+      "_ref": "cust_2",
+      "co_name": "台灣雅萊（Y'ORÉAL）資訊有限公司",
+      "contact_name": "張子豪",
+      "phone": "0965882359",
+      "staff_id": "@staff_8"
+    },
+    {
+      "_ref": "cust_3",
+      "co_name": "愛味之有限公司",
+      "contact_name": "謝雅萍",
+      "phone": "0901463410",
+      "staff_id": "@staff_6"
+    },
+    {
+      "_ref": "cust_4",
+      "co_name": "大八電視有限公司",
+      "contact_name": "林麗雲",
+      "phone": "03 4521936",
+      "staff_id": "@staff_2"
+    }
+  ],
+  "Supplier": [
+    {
+      "_ref": "sup_1",
+      "co_name": "愛味之股份有限公司",
+      "contact_name": "劉佳蓉",
+      "phone": "08-6678349"
+    },
+    {
+      "_ref": "sup_2",
+      "co_name": "台灣士賓",
+      "contact_name": "郭文華",
+      "phone": "03 6161054"
+    },
+    {
+      "_ref": "sup_3",
+      "co_name": "發聯科技有限公司",
+      "contact_name": "張碧霞",
+      "phone": "0978-467554"
+    },
+    {
+      "_ref": "sup_4",
+      "co_name": "榮長海運資訊有限公司",
+      "contact_name": "陳玉英",
+      "phone": "062 69691940"
+    }
+  ],
+  "Invertory": [
+    {
+      "_ref": "inv_1",
+      "name": "橡皮擦",
+      "quantity": 6,
+      "price": 20,
+      "sup_id": "@sup_2"
+    },
+    {
+      "_ref": "inv_2",
+      "name": "筆記本",
+      "quantity": 3,
+      "price": 92,
+      "sup_id": "@sup_4"
+    },
+    {
+      "_ref": "inv_3",
+      "name": "釘書機",
+      "quantity": 7,
+      "price": 68,
+      "sup_id": "@sup_3"
+    },
+    {
+      "_ref": "inv_4",
+      "name": "剪刀",
+      "quantity": 5,
+      "price": 73,
+      "sup_id": "@sup_3"
+    },
+    {
+      "_ref": "inv_5",
+      "name": "原子筆",
+      "quantity": 5,
+      "price": 99,
+      "sup_id": "@sup_2"
+    },
+    {
+      "_ref": "inv_6",
+      "name": "橡皮擦",
+      "quantity": 3,
+      "price": 73,
+      "sup_id": "@sup_3"
+    },
+    {
+      "_ref": "inv_7",
+      "name": "筆記本",
+      "quantity": 8,
+      "price": 93,
+      "sup_id": "@sup_2"
+    },
+    {
+      "_ref": "inv_8",
+      "name": "釘書機",
+      "quantity": 1,
+      "price": 89,
+      "sup_id": "@sup_4"
+    },
+    {
+      "_ref": "inv_9",
+      "name": "剪刀",
+      "quantity": 4,
+      "price": 32,
+      "sup_id": "@sup_1"
+    },
+    {
+      "_ref": "inv_10",
+      "name": "原子筆",
+      "quantity": 9,
+      "price": 61,
+      "sup_id": "@sup_3"
+    }
+  ],
+  "Purchase": [
+    {
+      "_ref": "pur_1",
+      "date": "2026-07-28",
+      "staff_id": "@staff_4",
+      "amount": 1197
+    },
+    {
+      "_ref": "pur_2",
+      "date": "2026-07-23",
+      "staff_id": "@staff_6",
+      "amount": 292
+    },
+    {
+      "_ref": "pur_3",
+      "date": "2026-07-26",
+      "staff_id": "@staff_9",
+      "amount": 20
+    }
+  ],
+  "Purchase_details": [
+    {
+      "pu_id": "@pur_1",
+      "goods_id": "@inv_7",
+      "unit": 4,
+      "price": 93,
+      "amount": 372
+    },
+    {
+      "pu_id": "@pur_1",
+      "goods_id": "@inv_2",
+      "unit": 5,
+      "price": 92,
+      "amount": 460
+    },
+    {
+      "pu_id": "@pur_1",
+      "goods_id": "@inv_6",
+      "unit": 5,
+      "price": 73,
+      "amount": 365
+    },
+    {
+      "pu_id": "@pur_2",
+      "goods_id": "@inv_4",
+      "unit": 4,
+      "price": 73,
+      "amount": 292
+    },
+    {
+      "pu_id": "@pur_3",
+      "goods_id": "@inv_1",
+      "unit": 1,
+      "price": 20,
+      "amount": 20
+    }
+  ],
+  "Order": [
+    {
+      "_ref": "order_1",
+      "date": "2026-07-25",
+      "staff_id": "@staff_8",
+      "cust_id": "@cust_3",
+      "amount": 365
+    },
+    {
+      "_ref": "order_2",
+      "date": "2026-07-27",
+      "staff_id": "@staff_10",
+      "cust_id": "@cust_1",
+      "amount": 154
+    },
+    {
+      "_ref": "order_3",
+      "date": "2026-07-24",
+      "staff_id": "@staff_9",
+      "cust_id": "@cust_1",
+      "amount": 600
+    }
+  ],
+  "Order_details": [
+    {
+      "order_id": "@order_1",
+      "goods_id": "@inv_7",
+      "unit": 5,
+      "price": 73,
+      "amount": 365
+    },
+    {
+      "order_id": "@order_2",
+      "goods_id": "@inv_10",
+      "unit": 2,
+      "price": 41,
+      "amount": 82
+    },
+    {
+      "order_id": "@order_2",
+      "goods_id": "@inv_2",
+      "unit": 1,
+      "price": 72,
+      "amount": 72
+    },
+    {
+      "order_id": "@order_3",
+      "goods_id": "@inv_3",
+      "unit": 2,
+      "price": 48,
+      "amount": 96
+    },
+    {
+      "order_id": "@order_3",
+      "goods_id": "@inv_6",
+      "unit": 4,
+      "price": 53,
+      "amount": 212
+    },
+    {
+      "order_id": "@order_3",
+      "goods_id": "@inv_7",
+      "unit": 4,
+      "price": 73,
+      "amount": 292
+    }
+  ],
+  "Sequences": [
+    {
+      "name": "Order",
+      "year": "2026",
+      "last_num": "3"
+    },
+    {
+      "name": "Purchase",
+      "year": "2026",
+      "last_num": "3"
     }
   ]
 }
