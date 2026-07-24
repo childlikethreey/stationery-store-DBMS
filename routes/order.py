@@ -7,7 +7,9 @@ from pydantic import BaseModel, Field
 from typing import Optional, Literal
 from routes.helpers import (
     get_Seq_no, get_all, get_one, empty_str_to_none,
-    staff_no_fm, cust_no_fm, AuthError, NotFoundError)
+    staff_no_fm, AuthError, NotFoundError)
+
+cust_no_fm = re.compile(r"^K\d{6}$")
 
 table = "`Order`"
 select_col = ("order_id", "order_no", "date", "amount", "status")
@@ -15,9 +17,11 @@ table_details = "`Order_details`"
 
 status_options = Literal["processing", "shipped", "completed", "cancelled"]
 
+
 class type_create_detail(BaseModel):
     goods_id: int = Field(gt=0)
     unit: int = Field(gt=0)
+
 
 class type_create(BaseModel):
     date: date_type = Field(default_factory=date_type.today)
@@ -28,21 +32,23 @@ class type_create(BaseModel):
     details: list[type_create_detail] = Field(min_length=1)
     _ = empty_str_to_none("reason", "discount")
 
+
 class type_update(BaseModel):
     date: Optional[date_type] = Field(default=None)
     reason: Optional[str] = None
     discount: Optional[int] = Field(default=None, ge=0)
     staff_no: Optional[str] = Field(default=None, pattern=staff_no_fm)
     cust_no: Optional[str] = Field(default=None, pattern=cust_no_fm)
+    status: Optional[status_options] = Field(default=None)
     details: Optional[list[type_create_detail]] = Field(default=None, min_length=1)
     _ = empty_str_to_none("reason", "discount")
 
-class type_update_status(BaseModel):
-    status: status_options
+
+order_bp = Blueprint("order", __name__)
 
 
-# check goods details
-def goods_detail(cursor, order_id: int, item: dict) -> int:
+def _apply_detail(cursor, order_id, item):
+    """檢查庫存、寫入 Order_details、扣庫存，回傳這筆明細金額"""
     cursor.execute("select * from `Invertory` where goods_id = %s for update", (item["goods_id"],))
     goods = cursor.fetchone()
     if not goods:
@@ -65,9 +71,6 @@ def goods_detail(cursor, order_id: int, item: dict) -> int:
     return amount
 
 
-order_bp = Blueprint("order", __name__)
-
-
 @order_bp.route("/order", methods=["get"])
 @login_required
 def show_all_order():
@@ -84,7 +87,7 @@ def show_one_order(order_id):
 
         cursor.execute(
             """
-            select order_no, O.date, O.reason, O.discount, O.amount, O.status,
+            select order_id, order_no, O.date, O.reason, O.discount, O.amount, O.status,
                    staff_no, cust_no
             from `Order` O
                 join `Staff` using (staff_id)
@@ -149,7 +152,7 @@ def create_order():
 
         total_amount = 0
         for item in details:
-            total_amount += goods_detail(cursor, new_id, item)
+            total_amount += _apply_detail(cursor, new_id, item)
 
         total_amount -= data["discount"] if "discount" in data else 0
         cursor.execute(f"update {table} set amount = %s where order_id = %s", (total_amount, new_id))
@@ -171,13 +174,28 @@ def update_order(order_id):
         4. Cust ID exist
         5. role == "staff" cannot update 負責職員的編號
         6. 折扣與折扣原因必須同時填寫或同時留空
-        7. 只有 processing 狀態才可修改明細
-        8. Goods ID exist，確認庫存足夠 -> detail
-        9. detail 最後要 update total amount 到 `Order`
-        10. 更新 `Invertory`
+        7. 狀態變更規則：
+           - cancelled 訂單不可再異動狀態
+           - 改成 cancelled，只有原本是 processing 才可以，而且只有負責職員或 admin 可以做
+        8. 只有 processing 狀態才可修改明細
+        9. Goods ID exist，確認庫存足夠 -> detail
+        10. detail 最後要 update total amount 到 `Order`
+        11. 更新 `Invertory`
         '''
         result = get_one(cursor, table, ("*", ), "order_id", order_id, True)
         order_no = result["order_no"]
+        old_status = result["status"]
+
+        # 狀態變更檢查
+        if "status" in data:
+            new_status = data["status"]
+            if old_status == "cancelled":
+                raise ValueError("已取消的訂單無法異動狀態")
+            if new_status == "cancelled":
+                if old_status != "processing":
+                    raise ValueError("只有處理中的訂單可以被取消")
+                if session["role"] != "admin" and session["staff_id"] != result["staff_id"]:
+                    raise AuthError("You do not have permission")
 
         if "staff_no" in data:
             user = get_one(cursor, "`Staff`", ("*", ), "staff_no", data.pop("staff_no"), False)
@@ -198,7 +216,7 @@ def update_order(order_id):
             raise ValueError("折扣與折扣原因必須同時填寫或同時留空")
 
         details = data.pop("details", None)
-        if details is not None and result["status"] != "processing":
+        if details is not None and old_status != "processing":
             raise ValueError("只有處理中的訂單可以修改明細")
 
         not_update = True
@@ -211,16 +229,15 @@ def update_order(order_id):
                 not_update = False
 
         if details is not None:
-
             cursor.execute(f"select goods_id, unit from {table_details} where order_id = %s", (order_id,))
-            for old in cursor.fetchall():
+            for od in cursor.fetchall():
                 cursor.execute("update `Invertory` set quantity = quantity + %s where goods_id = %s",
-                                (old["unit"], old["goods_id"]))
+                                (od["unit"], od["goods_id"]))
             cursor.execute(f"delete from {table_details} where order_id = %s", (order_id,))
 
             total_amount = 0
             for item in details:
-                total_amount += goods_detail(cursor, order_id, item)
+                total_amount += _apply_detail(cursor, order_id, item)
 
             total_amount -= final_discount or 0
             cursor.execute(f"update {table} set amount = %s where order_id = %s", (total_amount, order_id))
@@ -229,44 +246,3 @@ def update_order(order_id):
         if not_update:
             return jsonify({"message": "Not any update", "order_no": order_no}), 200
         return jsonify({"message": "update successed", "order_no": order_no}), 200
-
-
-@order_bp.route("/order/<int:order_id>/status", methods=["patch"])
-@admin_required
-def update_order_status(order_id):
-    data_chk = type_update_status(**request.get_json())
-    if data_chk.status == "cancelled":
-        raise ValueError("取消訂單請使用 /order/<id>/cancel")
-
-    with connect_manger() as cursor:
-        result = get_one(cursor, table, ("*", ), "order_id", order_id, False)
-        if result["status"] == "cancelled":
-            raise ValueError("已取消的訂單無法異動狀態")
-
-        cursor.execute(f"update {table} set status = %s where order_id = %s",
-                        (data_chk.status, order_id))
-        return jsonify({"message": "update successed", "order_no": result["order_no"]}), 200
-
-
-@order_bp.route("/order/<int:order_id>/cancel", methods=["patch"])
-@login_required
-def cancel_order(order_id):
-    with connect_manger() as cursor:
-        cursor.execute(f"select * from {table} where order_id = %s for update", (order_id,))
-        order = cursor.fetchone()
-        if not order:
-            raise NotFoundError("ID doesn't exist")
-
-        if order["status"] != "processing":
-            raise ValueError("只有處理中的訂單可以被取消")
-
-        if session["role"] != "admin" and session["staff_id"] != order["staff_id"]:
-            raise AuthError("You do not have permission")
-
-        cursor.execute(f"select goods_id, unit from {table_details} where order_id = %s", (order_id,))
-        for od in cursor.fetchall():
-            cursor.execute("update `Invertory` set quantity = quantity + %s where goods_id = %s",
-                            (od["unit"], od["goods_id"]))
-
-        cursor.execute(f"update {table} set status = 'cancelled' where order_id = %s", (order_id,))
-        return jsonify({"message": "cancel successed", "order_no": order["order_no"]}), 200
