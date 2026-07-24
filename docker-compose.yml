@@ -7,8 +7,8 @@ services:
       MYSQL_USER: ${USERNAME}
       MYSQL_PASSWORD: ${PASSWORD}
       MYSQL_DATABASE: ${DBNAME}
-    # ports:
-    #  - "3306:3306"
+    ports:
+      - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
       - ./ddl.sql:/docker-entrypoint-initdb.d/01-ddl.sql:ro
@@ -36,6 +36,13 @@ services:
       - "5001:5000"
     volumes:
       - .:/app
+
+  web:
+    image: php:8.2-apache
+    ports:
+      - "8000:80"
+    volumes:
+      - ./:/var/www/html
 
 volumes:
   db_data:

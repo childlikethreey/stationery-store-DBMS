@@ -11,9 +11,11 @@ from routes.purchase import pur_bp
 from pydantic import ValidationError
 import mysql.connector
 from routes.helpers import NotFoundError, AuthError
+from flask_cors import CORS
 
 load_dotenv()
 app = Flask(__name__)
+CORS(app, supports_credentials=True, origins=["http://localhost:8000"])
 app.secret_key=os.getenv("SECRET_KEY")
 app.json.ensure_ascii = False
 
