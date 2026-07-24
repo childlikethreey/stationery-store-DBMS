@@ -41,8 +41,6 @@ class type_update_status(BaseModel):
     status: status_options
 
 
-order_bp = Blueprint("order", __name__)
-
 # check goods details
 def goods_detail(cursor, order_id: int, item: dict) -> int:
     cursor.execute("select * from `Invertory` where goods_id = %s for update", (item["goods_id"],))
@@ -65,6 +63,9 @@ def goods_detail(cursor, order_id: int, item: dict) -> int:
     cursor.execute("update `Invertory` set quantity = %s where goods_id = %s",
                     (new_quantity, item["goods_id"]))
     return amount
+
+
+order_bp = Blueprint("order", __name__)
 
 
 @order_bp.route("/order", methods=["get"])

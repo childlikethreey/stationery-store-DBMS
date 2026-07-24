@@ -2,8 +2,8 @@ from flask import Blueprint, request, jsonify, session
 from db import connect_manger
 from routes.auth_required import login_required
 import bcrypt
-from pydantic import BaseModel, ValidationError, Field
-from routes.helpers import staff_no_fm
+from pydantic import BaseModel, Field
+from routes.helpers import staff_no_fm, NotFoundError
 
 
 class login_info(BaseModel):
@@ -31,7 +31,9 @@ def staff_login():
             """, (data["staff_no"], ))
         user = cursor.fetchone()
 
-        if not user or not bcrypt.checkpw(data["pw"].encode("utf-8"), user["pw_hash"].encode("utf-8")):
+        if not user:
+            raise NotFoundError("ID doesn't exist")
+        if not bcrypt.checkpw(data["pw"].encode("utf-8"), user["pw_hash"].encode("utf-8")):
             raise ValueError("wrong staff no or password")
         if not user["is_active"]:
             raise ValueError("Employee already quit")

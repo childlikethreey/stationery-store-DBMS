@@ -87,6 +87,12 @@ def update_staff(staff_id):
 @staff_bp.route("/staff/<int:staff_id>/account", methods = ["post"])
 @admin_required
 def create_new_acc(staff_id):
+    '''
+    Transaction checklist：
+    1. Staff ID exist
+    2. Staff is active
+    3. 不可以是清潔部門
+    '''
     data_chk = type_create_account(**request.get_json())
     data = data_chk.model_dump()
     with connect_manger() as cursor:
