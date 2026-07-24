@@ -1,166 +1,272 @@
 from datetime import date as date_type
-import mysql.connector
-from flask import Flask, Blueprint, request, jsonify
-from db import get_connection, connect_manger
+import re
+from flask import Blueprint, request, jsonify, session
+from db import connect_manger
 from routes.auth_required import login_required, admin_required
-from routes.commonly_used import get_Seq_no, get_all, get_one
-from pydantic import BaseModel, ValidationError, Field
+from pydantic import BaseModel, Field
 from typing import Optional, Literal
+from routes.helpers import (
+    get_Seq_no, get_all, get_one, empty_str_to_none,
+    staff_no_fm, cust_no_fm, AuthError, NotFoundError)
 
-table = "Order"
-select_col1 = ("order_no", "date", "amount", "status", "order_id")
-select_col2 = ("order_no", "date", "reason", "discount", "amount", "status", "staff_id", "cust_id")
+table = "`Order`"
+select_col = ("order_id", "order_no", "date", "amount", "status")
+table_details = "`Order_details`"
 
-STATUS_OPTIONS = Literal["processing", "shipped", "completed", "cancelled"]
+status_options = Literal["processing", "shipped", "completed", "cancelled"]
+
+class type_create_detail(BaseModel):
+    goods_id: int = Field(gt=0)
+    unit: int = Field(gt=0)
 
 class type_create(BaseModel):
     date: date_type = Field(default_factory=date_type.today)
-    reason: Optional[str] = None
+    reason: Optional[str] = Field(default=None)
     discount: Optional[int] = Field(default=None, ge=0)
-    staff_id: int = Field(gt=0)
-    cust_id: int = Field(gt=0)
+    staff_no: str = Field(pattern=staff_no_fm)
+    cust_no: str = Field(pattern=cust_no_fm)
+    details: list[type_create_detail] = Field(min_length=1)
+    _ = empty_str_to_none("reason", "discount")
 
 class type_update(BaseModel):
     date: Optional[date_type] = Field(default=None)
     reason: Optional[str] = None
     discount: Optional[int] = Field(default=None, ge=0)
-    status: Optional[STATUS_OPTIONS] = Field(default=None)
-    staff_id: Optional[int] = Field(default=None, gt=0)
-    cust_id: Optional[int] = Field(default=None, gt=0)
+    staff_no: Optional[str] = Field(default=None, pattern=staff_no_fm)
+    cust_no: Optional[str] = Field(default=None, pattern=cust_no_fm)
+    details: Optional[list[type_create_detail]] = Field(default=None, min_length=1)
+    _ = empty_str_to_none("reason", "discount")
 
-def chk_staff_id(cursor, staff_id: int) -> tuple | None:
-    cursor.execute("select * from `Staff` where staff_id = %s", (staff_id, ))
-    result = cursor.fetchone()
-    if not result:
-        return (jsonify({"error": "This employee ID doesn't exist"}), 404)
-    if not result["is_active"]:
-        return (jsonify({"error": "This employee already quit"}), 400)
-    return None
+class type_update_status(BaseModel):
+    status: status_options
 
-def chk_cust_id(cursor, cust_id: int) -> tuple | None:
-    cursor.execute("select * from `Customer` where cust_id = %s", (cust_id, ))
-    result = cursor.fetchone()
-    if not result:
-        return (jsonify({"error": "This customer ID doesn't exist"}), 404)
-    return None
+
+# check goods details
+def goods_detail(cursor, order_id: int, item: dict) -> int:
+    cursor.execute("select * from `Invertory` where goods_id = %s for update", (item["goods_id"],))
+    goods = cursor.fetchone()
+    if not goods:
+        raise NotFoundError(f"{item['goods_id']} not exist")
+    if goods["quantity"] < item["unit"]:
+        raise ValueError(f"{item['goods_id']} 庫存不足")
+
+    price = goods["price"]
+    amount = price * item["unit"]
+    item.update({"order_id": order_id, "price": price, "amount": amount})
+
+    item_cols = ", ".join(item.keys())
+    item_sum = ", ".join(["%s"] * len(item.values()))
+    cursor.execute(f"insert into {table_details} ({item_cols}) values ({item_sum})",
+                    tuple(item.values()))
+
+    new_quantity = goods["quantity"] - item["unit"]
+    cursor.execute("update `Invertory` set quantity = %s where goods_id = %s",
+                    (new_quantity, item["goods_id"]))
+    return amount
 
 
 order_bp = Blueprint("order", __name__)
 
 
-# 可以顯示訂單的基本資料
-@order_bp.route("/order", methods = ["get"])
+@order_bp.route("/order", methods=["get"])
 @login_required
 def show_all_order():
     with connect_manger() as cursor:
-        try:
-            result = get_all(cursor, table, select_col1, True)
-            return result
-        except mysql.connector.Error as err:
-            return jsonify({"error": str(err)}), 500
+        result = get_all(cursor, table, select_col, True)
+        return result
 
 
-# 可以顯示訂單的基本資料（ONE）
-@order_bp.route("/order/<int:order_id>", methods = ["get"])
+@order_bp.route("/order/<int:order_id>", methods=["get"])
 @login_required
 def show_one_order(order_id):
     with connect_manger() as cursor:
-        try:
-            order, error = get_one(cursor, table, select_col1, "order_id", order_id, True)
-            if error:
-                return error
-            else:
-                return jsonify(order), 200
-        except mysql.connector.Error as err:
-            return jsonify({"error": str(err)}), 500
+        _ = get_one(cursor, table, select_col, "order_id", order_id, True)
+
+        cursor.execute(
+            """
+            select order_no, O.date, O.reason, O.discount, O.amount, O.status,
+                   staff_no, cust_no
+            from `Order` O
+                join `Staff` using (staff_id)
+                join `Customer` using (cust_id)
+            where order_id = %s
+            """, (order_id,))
+        result = cursor.fetchone()
+
+        cursor.execute(
+            """
+            select D.goods_id, I.name, D.unit, D.price, D.amount
+            from `Order_details` D join `Invertory` I using (goods_id)
+            where order_id = %s
+            """, (order_id,))
+        details = cursor.fetchall()
+        result["details"] = details
+        return result
 
 
-@order_bp.route("/order", methods = ["post"])
+@order_bp.route("/order", methods=["post"])
 @login_required
 def create_order():
-    try:
-        order_chk = type_create(**request.get_json())
-    except ValidationError as err:
-        return jsonify({"error": err.errors()}), 400
-    order_data = order_chk.model_dump()
+    '''
+    Transaction checklist：
+    1. Staff ID exist
+    2. Staff is active
+    3. Cust ID exist
+    4. 折扣與折扣原因必須同時填寫或同時留空
+    5. 由 `Sequences` 取號碼加一，即此訂單的編號
+    6. Goods ID exist，並確認庫存足夠 -> 用 Invertory 定價
+    7. detail 最後要 update total amount 到 `Order`
+    8. 扣 `Invertory` 庫存
+    '''
+    data_chk = type_create(**request.get_json())
+    data = data_chk.model_dump(exclude_unset=True)
 
     with connect_manger() as cursor:
-        try:
-            # firm staff_id exist & working
-            error1 = chk_staff_id(cursor, order_data["staff_id"])
-            if error1: return error1
+        user = get_one(cursor, "`Staff`", ("*", ), "staff_no", data["staff_no"], False)
+        if not user["is_active"]:
+            raise ValueError("Employee already quit")
 
-            # firm cust_id exist
-            error2 = chk_cust_id(cursor, order_data["cust_id"])
-            if error2: return error2
+        cust = get_one(cursor, "`Customer`", ("*", ), "cust_no", data["cust_no"], False)
 
-            # 折扣跟折扣原因要嘛一起有要嘛一起沒有
-            if (order_data["reason"] is None) != (order_data["discount"] is None):
-                return jsonify({"error": "折扣與折扣原因必須同時填寫或同時留空"}), 400
+        if ("reason" in data) != ("discount" in data):
+            raise ValueError("折扣與折扣原因必須同時填寫或同時留空")
 
-            '''
-            "transaction checklist"
-            會rollback：
-            1. 負責職員是否是在職 -> chk done
-            2. 因為要取下來成為新訂單的編號，sequences 要扣起來
-            需要處理的：
-            1. seqquences取下來之後用要加一才能用
-            2. 訂單編號格式為 “INV-YEARXXXXXX”
-            '''
-            # 新訂單的編號
-            year = order_data["date"].year
-            num = get_Seq_no(cursor, "Order", year)
+        details = data.pop("details")
+        del data["staff_no"]
+        del data["cust_no"]
+        data["staff_id"] = user["staff_id"]
+        data["cust_id"] = cust["cust_id"]
 
-            # 訂單編號格式為 “INV-YEARXXXXXX”
-            order_no = f"INV-{year}{num:06d}"
-            order_data.update({"order_no": order_no, "amount": 0})
-            s_sum = ", ".join(["%s"] * len(order_data.values()))
-            cursor.execute(f"insert into `Order` ({', '.join(order_data.keys())}) values ({s_sum})",
-                           tuple(order_data.values()))
-            return jsonify({"message": "create successed"}), 201
+        year = data["date"].year
+        num = get_Seq_no(cursor, "Order", year)
+        order_no = f"INV-{year}{num:06d}"
+        data.update({"order_no": order_no})
 
-        except mysql.connector.Error as err:
-            return jsonify({"error": str(err)}), 500
+        cols = ", ".join(data.keys())
+        s_sum = ", ".join(["%s"] * len(data.values()))
+        cursor.execute(f"insert into {table} ({cols}) values ({s_sum})", tuple(data.values()))
+        new_id = cursor.lastrowid
+
+        total_amount = 0
+        for item in details:
+            total_amount += goods_detail(cursor, new_id, item)
+
+        total_amount -= data["discount"] if "discount" in data else 0
+        cursor.execute(f"update {table} set amount = %s where order_id = %s", (total_amount, new_id))
+        return jsonify({"message": "create successed", "order_no": order_no}), 201
 
 
-@order_bp.route("/order/<int:order_id>", methods = ["put"])
+@order_bp.route("/order/<int:order_id>", methods=["put"])
 @login_required
 def update_order(order_id):
-    try:
-        order_chk = type_update(**request.get_json())
-    except ValidationError as err:
-        return jsonify({"error": err.errors()}), 400
-    order_data = order_chk.model_dump(exclude_unset=True)
+    data_chk = type_update(**request.get_json())
+    data = data_chk.model_dump(exclude_unset=True)
 
     with connect_manger() as cursor:
-        try:
-            # firm order_id exist, role limit
-            old_order, error3 = get_one(cursor, table, select_col2, "order_id", order_id, True)
-            if error3: return error3
+        '''
+        Transaction checklist：
+        1. Order ID exist
+        2. Staff ID exist
+        3. Staff is active
+        4. Cust ID exist
+        5. role == "staff" cannot update 負責職員的編號
+        6. 折扣與折扣原因必須同時填寫或同時留空
+        7. 只有 processing 狀態才可修改明細
+        8. Goods ID exist，確認庫存足夠 -> detail
+        9. detail 最後要 update total amount 到 `Order`
+        10. 更新 `Invertory`
+        '''
+        result = get_one(cursor, table, ("*", ), "order_id", order_id, True)
+        order_no = result["order_no"]
 
-            if "staff_id" in order_data:
-                error1 = chk_staff_id(cursor, order_data["staff_id"])
-                if error1: return error1
+        if "staff_no" in data:
+            user = get_one(cursor, "`Staff`", ("*", ), "staff_no", data.pop("staff_no"), False)
+            if not user["is_active"]:
+                raise ValueError("Employee already quit")
+            if session["role"] == "staff":
+                raise AuthError("You cannot change the staff_no")
+            data["staff_id"] = user["staff_id"]
 
-            if "cust_id" in order_data:
-                error2 = chk_cust_id(cursor, order_data["cust_id"])
-                if error2: return error2
+        if "cust_no" in data:
+            cust = get_one(cursor, "`Customer`", ("*", ), "cust_no", data.pop("cust_no"), False)
+            data["cust_id"] = cust["cust_id"]
 
-            # 折扣跟折扣原因要嘛一起有要嘛一起沒有
-            final_reason = order_data.get("reason", old_order["reason"])
-            final_discount = order_data.get("discount", old_order["discount"])
-            if (final_reason is None) != (final_discount is None):
-                return jsonify({"error": "折扣與折扣原因必須同時填寫或同時留空"}), 400
+        old_order = get_one(cursor, table, ("reason", "discount"), "order_id", order_id, True)
+        final_reason = data.get("reason", old_order["reason"])
+        final_discount = data.get("discount", old_order["discount"])
+        if (final_reason is not None) != (final_discount is not None):
+            raise ValueError("折扣與折扣原因必須同時填寫或同時留空")
 
-            if order_data.get("status") == "cancelled" and old_order["status"] != "processing":
-                return jsonify({"error": "只有處理中的訂單可以被取消"}), 400
+        details = data.pop("details", None)
+        if details is not None and result["status"] != "processing":
+            raise ValueError("只有處理中的訂單可以修改明細")
 
-            if order_data:
-                cols = ", ".join(f"{key} = %s" for key in order_data.keys())
-                cursor.execute(f"update `Order` set {cols} where order_id = %s",
-                           tuple(order_data.values()) + (order_id, ))
+        not_update = True
 
-            return jsonify({"message": "update successed"}), 200
+        if data:
+            cols = ", ".join([f"{key} = %s" for key in data.keys()])
+            cursor.execute(f"update {table} set {cols} where order_id = %s",
+                            tuple(data.values()) + (order_id,))
+            if cursor.rowcount != 0:
+                not_update = False
 
-        except mysql.connector.Error as err:
-            return jsonify({"error": str(err)}), 500
+        if details is not None:
+
+            cursor.execute(f"select goods_id, unit from {table_details} where order_id = %s", (order_id,))
+            for old in cursor.fetchall():
+                cursor.execute("update `Invertory` set quantity = quantity + %s where goods_id = %s",
+                                (old["unit"], old["goods_id"]))
+            cursor.execute(f"delete from {table_details} where order_id = %s", (order_id,))
+
+            total_amount = 0
+            for item in details:
+                total_amount += goods_detail(cursor, order_id, item)
+
+            total_amount -= final_discount or 0
+            cursor.execute(f"update {table} set amount = %s where order_id = %s", (total_amount, order_id))
+            not_update = False
+
+        if not_update:
+            return jsonify({"message": "Not any update", "order_no": order_no}), 200
+        return jsonify({"message": "update successed", "order_no": order_no}), 200
+
+
+@order_bp.route("/order/<int:order_id>/status", methods=["patch"])
+@admin_required
+def update_order_status(order_id):
+    data_chk = type_update_status(**request.get_json())
+    if data_chk.status == "cancelled":
+        raise ValueError("取消訂單請使用 /order/<id>/cancel")
+
+    with connect_manger() as cursor:
+        result = get_one(cursor, table, ("*", ), "order_id", order_id, False)
+        if result["status"] == "cancelled":
+            raise ValueError("已取消的訂單無法異動狀態")
+
+        cursor.execute(f"update {table} set status = %s where order_id = %s",
+                        (data_chk.status, order_id))
+        return jsonify({"message": "update successed", "order_no": result["order_no"]}), 200
+
+
+@order_bp.route("/order/<int:order_id>/cancel", methods=["patch"])
+@login_required
+def cancel_order(order_id):
+    with connect_manger() as cursor:
+        cursor.execute(f"select * from {table} where order_id = %s for update", (order_id,))
+        order = cursor.fetchone()
+        if not order:
+            raise NotFoundError("ID doesn't exist")
+
+        if order["status"] != "processing":
+            raise ValueError("只有處理中的訂單可以被取消")
+
+        if session["role"] != "admin" and session["staff_id"] != order["staff_id"]:
+            raise AuthError("You do not have permission")
+
+        cursor.execute(f"select goods_id, unit from {table_details} where order_id = %s", (order_id,))
+        for od in cursor.fetchall():
+            cursor.execute("update `Invertory` set quantity = quantity + %s where goods_id = %s",
+                            (od["unit"], od["goods_id"]))
+
+        cursor.execute(f"update {table} set status = 'cancelled' where order_id = %s", (order_id,))
+        return jsonify({"message": "cancel successed", "order_no": order["order_no"]}), 200
