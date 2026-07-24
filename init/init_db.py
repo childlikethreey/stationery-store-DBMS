@@ -7,10 +7,10 @@ import bcrypt
 
 load_dotenv()
 db_config = {
-    'host': os.getenv('SERVER'),
-    'user': os.getenv('USERNAME'),
-    'password': os.getenv('PASSWORD'),
-    'port': int(os.getenv('PORT')),
+    'host': os.getenv('SERVER_INIT'),
+    'user': os.getenv('ROOT_USERNAME'),
+    'password': os.getenv('ROOT_PASSWORD'),
+    'port': int(os.getenv('PORT_INIT')),
     'charset': 'utf8mb4',
     'client_flag': CLIENT.MULTI_STATEMENTS,
 }
@@ -28,8 +28,7 @@ def clear_testdata(cursor):
         ]
     cursor.execute("SET FOREIGN_KEY_CHECKS = 0") 
     for table in table_list:
-        cursor.execute(f"DELETE FROM {table}")
-        cursor.execute(f"ALTER TABLE {table} AUTO_INCREMENT = 1")
+        cursor.execute(f"TRUNCATE TABLE `{table}`")
     cursor.execute("SET FOREIGN_KEY_CHECKS = 1")
 
 def main():
@@ -42,17 +41,14 @@ def main():
             f'CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci'
         )
         conn.commit()
-
+        
         cursor.execute(f'use {db_name}')
+        '''
         with open(ddl_file, 'r', encoding='utf-8') as f:
             content = f.read()
-        '''
-        stmt = [s.strip() for s in content.split(';') if s.strip()]
-        for n in stmt:
-            cursor.execute(n)
-        '''
         cursor.execute(content)
         conn.commit()
+        '''
 
         if os.path.exists(seed_file):
             clear_testdata(cursor)
